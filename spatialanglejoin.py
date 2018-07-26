@@ -15,23 +15,36 @@ arcpy.env.workspace = arcpy.GetParameterAsText(0)
 
 arcpy.CopyFeatures_management(join, join_copy)
 
-arcpy.AddField_management(join_copy, "angle", "FLOAT")
+arcpy.AddField_management(join_copy, "roadAngle", "FLOAT")
+arcpy.AddField_management(target, "smAngle", "FLOAT")
+arcpy.AddField_management(join_copy, "delta", "FLOAT")
 
 
 def get_angle(line):
     p1 = line.firstPoint
     p2 = line.lastPoint
     angle = np.arctan2( p1.Y-p2.Y, p1.X-p2.X )
-    return np.cos(2*angle)
+    angle = angle if (angle > 0) else (angle + (2*np.pi))
+    angle = np.degrees(angle)
+    angle = np.floor(angle)
+    angle = angle % 180 
+    return angle
 
 
-with arcpy.da.UpdateCursor(join_copy, ["SHAPE@", "angle"]) as cur:
+    
+with arcpy.da.UpdateCursor(join_copy, ["SHAPE@", "roadAngle"]) as cur:
+    for row in cur:
+        angle = get_angle(row[0])
+        row[1] = angle
+        cur.updateRow(row)   
+        
+with arcpy.da.UpdateCursor(target, ["SHAPE@", "smAngle"]) as cur:
     for row in cur:
         angle = get_angle(row[0])
         row[1] = angle
         cur.updateRow(row)
 
-
+        
 arcpy.SpatialJoin_analysis(target, 
         join_copy, 
         output, 
@@ -39,36 +52,42 @@ arcpy.SpatialJoin_analysis(target,
         match_option=match,
         search_radius=search_radius)
 
-
-join_fields = ["SHAPE@", "Key_ID"]
-output_fields = ["JOIN_FID", "angle"]
-
-remove_sections = set()
-
-with arcpy.da.SearchCursor(target, join_fields) as cur:
+        
+with arcpy.da.UpdateCursor(output, ["roadAngle", "smAngle", "delta"]) as cur:
     for row in cur:
-        where = "Key_ID=" + str(row[1])
-        delta = None
-        fid = None
-        target_angle = get_angle(row[0])
-        with arcpy.da.SearchCursor(output, output_fields, where_clause=where) as ucur:
-            for urow in ucur:
-                join_angle = urow[1]
-                if join_angle is not None:
-                    join_delta = np.abs(target_angle - join_angle)
-                    
-                    if fid is not None:
-                        if join_delta < delta:
-                            delta = join_delta
-                            remove_sections.add(fid)
-                            fid = urow[0]
-                        else:
-                            remove_sections.add(urow[0])
-                    else:
-                        delta = join_delta
-                        fid = urow[0]
+        jAngle = row[0]
+        tAngle = row[1]
+        if jAngle is not None:
+            row[2] = np.abs(tAngle-jAngle)
+        else:
+            row[2] = 0
+        cur.updateRow(row)
 
-with arcpy.da.UpdateCursor(output,["JOIN_FID"]) as cur:
+
+        
+
+
+sql = (None, "ORDER BY delta ASC")
+save = set()
+trash = set()
+with arcpy.da.SearchCursor(output, ["OID@", "Key_ID", "delta"], sql_clause = sql) as cur:
     for row in cur:
-        if row[0] in remove_sections:
+        fid = row[0]
+        key = row[1]
+        
+        if key in save:
+            trash.add(fid)
+        else:
+            save.add(key)
+            
+        
+    
+with arcpy.da.UpdateCursor(output, ["OID@"]) as cur:
+    for row in cur:
+        if row[0] in trash:
             cur.deleteRow()
+
+
+
+
+
