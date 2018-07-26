@@ -9,15 +9,9 @@ polar angle.
 import arcpy
 import numpy as np
 
-arcpy.env.workspace = arcpy.GetParameterAsText(0)
-#target = arcpy.GetParameterAsText(1)
-#join = arcpy.GetParameterAsText(2)
-#output = arcpy.GetParameterAsText(3)
-
-target = "US_SM_COPY"
-join = "ROAD_Brighton"
-out_features = "SM_Roads_Radius"
-
+target = arcpy.GetParameterAsText(0)
+join = arcpy.GetParameterAsText(1)
+out_features = arcpy.GetParameterAsText(2)
 
 operation = "JOIN_ONE_TO_MANY"
 match = "WITHIN_A_DISTANCE"
