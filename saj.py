@@ -35,10 +35,13 @@ def get_angle(line):
     angle = np.arctan2( p1.Y-p2.Y, p1.X-p2.X )
     angle = angle if (angle > 0) else (angle + (2*np.pi))
     angle = np.degrees(angle)
-    angle = np.floor(angle)
-    angle = angle % 180 
     return angle
 
+def get_acute_angle(a1, a2):
+    angle = np.abs( a1 - a2 )
+    if angle > 90:
+        angle = 180 - 90
+    return angle 
     
 with arcpy.da.UpdateCursor(join_copy, ["SHAPE@", "joinAngle"]) as cur:
     for row in cur:
@@ -67,7 +70,7 @@ with arcpy.da.UpdateCursor(output, ["joinAngle", "targetAngle", "delta"]) as cur
         jAngle = row[0]
         tAngle = row[1]
         if jAngle is not None:
-            row[2] = np.abs(tAngle-jAngle)
+            row[2] = get_acute_angle(tAngle, jAngle)
         else:
             row[2] = 0
         cur.updateRow(row)
