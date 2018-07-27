@@ -1,8 +1,10 @@
 """
 Spatial Angle Join
 
-Spatially join line features within a radius that have the most similar 
+Spatially join line features (one to one) within a radius that have the most similar 
 polar angle. 
+
+ArcGIS License: Basic
 
 """
 
