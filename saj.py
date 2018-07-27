@@ -9,26 +9,38 @@ polar angle.
 import arcpy
 import numpy as np
 
-target = arcpy.GetParameterAsText(0)
-join = arcpy.GetParameterAsText(1)
-out_features = arcpy.GetParameterAsText(2)
 
-operation = "JOIN_ONE_TO_MANY"
-match = "WITHIN_A_DISTANCE"
-search_radius = 60
+def main():
+    target = arcpy.GetParameterAsText(0)
+    join = arcpy.GetParameterAsText(1)
+    out_features = arcpy.GetParameterAsText(2)
+    search_radius = 60
+    spatial_angle_join(target, join, out_features,search_radius)
 
-join_copy = r"in_memory/join"
-target_copy = r"in_memory/target"
-output = r"in_memory/output"
+    
+def spatial_angle_join(target, join, out_features, search_radius):
+    operation = "JOIN_ONE_TO_MANY"
+    match = "WITHIN_A_DISTANCE"
 
-arcpy.CopyFeatures_management(join, join_copy)
-arcpy.CopyFeatures_management(target, target_copy)
-
-arcpy.AddField_management(join_copy, "joinAngle", "FLOAT")
-arcpy.AddField_management(join_copy, "delta", "FLOAT")
-arcpy.AddField_management(target_copy, "targetAngle", "FLOAT")
-
-
+    output = r"in_memory/output"
+    
+    join_angles = angle_lookup(join)
+    target_angles = angle_lookup(target)
+    
+    arcpy.SpatialJoin_analysis(target, 
+        join, 
+        output, 
+        join_operation=operation, 
+        match_option=match,
+        search_radius=search_radius)
+    
+    acute_angles = find_acute_angles(output, target_angles, join_angles)
+    
+    save_join_with_similar_angle(acute_angles, output)
+    
+    arcpy.CopyFeatures_management(output, out_features)
+    
+    
 def get_angle(line):
     p1 = line.firstPoint
     p2 = line.lastPoint
@@ -42,60 +54,49 @@ def get_acute_angle(a1, a2):
     if angle > 90:
         angle = 180 - 90
     return angle 
+
     
-with arcpy.da.UpdateCursor(join_copy, ["SHAPE@", "joinAngle"]) as cur:
-    for row in cur:
-        angle = get_angle(row[0])
-        row[1] = angle
-        cur.updateRow(row)   
+def angle_lookup(features):
+    angle_lookup = dict()
+    with arcpy.da.SearchCursor(features,["OID@","SHAPE@"]) as cur:
+        for row in cur:
+            angle_lookup[row[0]] = get_angle(row[1])
+    return angle_lookup
 
-        
-with arcpy.da.UpdateCursor(target_copy, ["SHAPE@", "targetAngle"]) as cur:
-    for row in cur:
-        angle = get_angle(row[0])
-        row[1] = angle
-        cur.updateRow(row)
+def find_acute_angles(output, target_angles, join_angles):
+    acute_angles = list()
+    with arcpy.da.SearchCursor(output, ["OID@","TARGET_FID","JOIN_FID"]) as cur:
+        for row in cur:
+            oid = row[0]
+            tid = row[1]
+            jid = row[2]
+            if jid != -1:
+                target_angle = target_angles[tid]
+                join_angle = join_angles[jid]
+                acute_angle = get_acute_angle(target_angle, join_angle)
+                acute_angles.append((oid, tid, acute_angle))
+            else:
+                acute_angles.append((oid, tid, 0))
+    return acute_angles
 
-        
-arcpy.SpatialJoin_analysis(target_copy, 
-        join_copy, 
-        output, 
-        join_operation=operation, 
-        match_option=match,
-        search_radius=search_radius)
-
-        
-with arcpy.da.UpdateCursor(output, ["joinAngle", "targetAngle", "delta"]) as cur:
-    for row in cur:
-        jAngle = row[0]
-        tAngle = row[1]
-        if jAngle is not None:
-            row[2] = get_acute_angle(tAngle, jAngle)
+    
+    
+def save_join_with_similar_angle(acute_angles, output):
+    acute_angles.sort(key=lambda d: d[2])
+    save = set()
+    trash = set()
+    for delta in acute_angles:
+        oid = delta[0]
+        tid = delta[1]
+        if tid in save:
+            trash.add(oid)
         else:
-            row[2] = 0
-        cur.updateRow(row)
+            save.add(tid)
+            
+    with arcpy.da.UpdateCursor(output, ["OID@"]) as cur:
+        for row in cur:
+            if row[0] in trash:
+                cur.deleteRow()
 
-
-sql = (None, "ORDER BY delta ASC")
-save = set()
-trash = set()
-with arcpy.da.SearchCursor(output, ["OID@", "Key_ID", "delta"], sql_clause = sql) as cur:
-    for row in cur:
-        fid = row[0]
-        key = row[1]
-        if key in save:
-            trash.add(fid)
-        else:
-            save.add(key)
-
-
-with arcpy.da.UpdateCursor(output, ["OID@"]) as cur:
-    for row in cur:
-        if row[0] in trash:
-            cur.deleteRow()
-
-
-arcpy.CopyFeatures_management(output, out_features)
-
-
-
+if __name__ == "__main__":
+    main()
