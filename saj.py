@@ -39,18 +39,6 @@ def spatial_angle_join(target, join, out_features, search_radius):
     acute_angles = find_acute_angles(output, target_angles, join_angles)
     
     save_join_with_similar_angle(acute_angles, output)
-    # arcpy.AddField_management(output, "tAngle", "FLOAT")
-    # arcpy.AddField_management(output, "jAngle", "FLOAT")
-    # arcpy.AddField_management(output, "aAngle", "FLOAT")
-    # with arcpy.da.UpdateCursor(output,["OID@","TARGET_FID","JOIN_FID","tAngle","jAngle","aAngle"]) as cur:
-        # for row in cur:
-            # try:
-                # row[3] = target_angles[row[1]]
-                # row[4] = join_angles[row[2]]
-                # row[5] = get_acute_angle(row[3],row[4])
-                # cur.updateRow(row)
-            # except:
-                # pass
     
     arcpy.CopyFeatures_management(output, out_features)
     
