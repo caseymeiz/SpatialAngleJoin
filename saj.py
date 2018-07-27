@@ -16,7 +16,7 @@ def main():
     target = arcpy.GetParameterAsText(0)
     join = arcpy.GetParameterAsText(1)
     out_features = arcpy.GetParameterAsText(2)
-    search_radius = 60
+    search_radius = 100
     spatial_angle_join(target, join, out_features,search_radius)
 
     
