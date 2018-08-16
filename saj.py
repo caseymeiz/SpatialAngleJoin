@@ -61,7 +61,7 @@ def get_angle(line):
 def get_acute_angle(a1, a2):
 	angle = np.abs( a1 - a2 )
 	if angle > 90:
-		angle = 180 - 90
+		angle = 180 - angle
 	return angle 
 
 	
