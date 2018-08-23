@@ -1,5 +1,13 @@
 # Spatial Angle Join
-Spatially joins two line features within a radius and selects the feature with the most similar polar angle
+Spatially joins two line features within a radius and selects the feature with the most similar polar angle.
+
+### Requirements
+
+ArcGIS License: Basic
+
+### Usage
+
+**Add it to your workflow**
 
 ```python
 import saj
@@ -11,6 +19,12 @@ search radius = 75 # feet
 
 saj.spatial_angle_join(target, join, output, search_radius)
 ```
+
+**Or set-up the parameters and use it as a stand alone script tool**
+
+![Script Parameters](docs/parameters.png)
+
+
 
 
 
