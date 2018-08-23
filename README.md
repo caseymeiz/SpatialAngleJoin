@@ -15,7 +15,7 @@ import saj
 target = "target_features"
 join = "join_features"
 outupt = "output_features"
-search radius = 75 # feet
+search_radius = 75 # feet
 
 saj.spatial_angle_join(target, join, output, search_radius)
 ```
