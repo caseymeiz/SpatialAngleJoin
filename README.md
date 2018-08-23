@@ -30,7 +30,7 @@ saj.spatial_angle_join(target, join, output, search_radius)
 
 ### Example use case
 
-Joining road features with an sanitary mains. For example a road pointing north will have an angle of 90 degrees with respect to the equator and a road pointing east will have an angle of 0 degrees because it is parallel to the equator. The sewers mostly run parallel to the road so if there is a sewer with an angle of 85 degrees it will be matched with the road going north because 85 degrees is closer to 90 degrees than 0 degrees.
+Joining road features with sanitary mains. For example a road pointing north will have an angle of 90 degrees with respect to the equator and a road pointing east will have an angle of 0 degrees because it is parallel to the equator. The sewers mostly run parallel to the road so if there is a sewer with an angle of 85 degrees it will be matched with the road going north because 85 degrees is closer to 90 degrees than 0 degrees.
 
 Lets say you want to join the name of the roads (green and purple lines) to the sanitary mains (grey lines). 
 
