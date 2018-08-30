@@ -10,15 +10,85 @@ ArcGIS License: Basic
 
 import arcpy
 import numpy as np
+import os
 
+class Join(object):
+	def __init__(self):
+		"""Define the tool (tool name is the name of the class)."""
+		self.label = "Join"
+		self.description = ""
+		self.canRunInBackground = False
 
-def main():
-	target = arcpy.GetParameterAsText(0)
-	join = arcpy.GetParameterAsText(1)
-	out_features = arcpy.GetParameterAsText(2)
-	search_radius = int(arcpy.GetParameterAsText(3))
-	spatial_angle_join(target, join, out_features,search_radius)
+	def getParameterInfo(self):
+		"""Define parameter definitions"""
+		param0 = arcpy.Parameter(name = "target_lines",
+		                         displayName = "Target Lines",
+		                         direction = "Input",
+		                         parameterType = "Required",
+		                         datatype = "DEFeatureClass")
+		param1 = arcpy.Parameter(name = "join_lines",
+		                         displayName = "Join Lines",
+		                         direction = "Input",
+		                         parameterType = "Required",
+		                         datatype = "DEFeatureClass")
+		param2 = arcpy.Parameter(name = "workspace",
+		                         displayName = "Workspace",
+		                         direction = "Input",
+		                         parameterType = "Required",
+		                         datatype = "DEWorkspace")
+		param3 = arcpy.Parameter(name = "out_lines",
+		                         displayName = "Output Lines",
+		                         direction = "Input",
+		                         parameterType = "Required",
+		                         datatype = "GPString")					 
+		param4 = arcpy.Parameter(name = "search_radius",
+		                         displayName = "Search Radius",
+		                         direction = "Input",
+		                         parameterType = "Required",
+		                         datatype = "GPLong")
+		param5 = arcpy.Parameter(name="overwrite_output",
+		                         displayName="Overwrite Output",
+		                         direction="Input",
+		                         parameterType="Required",
+		                         datatype="GPBoolean")
+		param5.value = True
+		
+		params = [param0, param1, param2, param3, param4, param5]
+		return params
 
+	def isLicensed(self):
+		"""Set whether tool is licensed to execute."""
+		return True
+
+	def updateParameters(self, parameters):
+		"""Modify the values and properties of parameters before internal
+		validation is performed.  This method is called whenever a parameter
+		has been changed."""
+		return
+
+	def updateMessages(self, parameters):
+		"""Modify the messages created by internal validation for each tool
+		parameter.	This method is called after internal validation."""
+		return
+
+	def execute(self, parameters, messages):
+		"""The source code of the tool."""
+		target = parameters[0].valueAsText
+		join_lines = parameters[1].valueAsText
+		workspace = parameters[2].valueAsText
+		out_feature = parameters[3].valueAsText
+		
+		out_lines = os.path.join(workspace, out_feature)
+		
+		radius = parameters[4].value
+		arcpy.env.overwriteOutput = parameters[5].value
+		
+		spatial_angle_join(target, join_lines, out_lines, radius)
+		
+		return
+		
+	
+	
 	
 def spatial_angle_join(target, join, out_features, search_radius):
 	operation = "JOIN_ONE_TO_MANY"
