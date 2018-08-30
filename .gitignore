@@ -1,3 +1,4 @@
 *.tbx
 *.gdb
 *.pdf
+*.pyc
