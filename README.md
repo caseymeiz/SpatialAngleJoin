@@ -1,3 +1,5 @@
+Not maintained
+
 # Spatial Angle Join
 Spatially joins line features within a radius and selects the feature with the most similar polar angle.
 
